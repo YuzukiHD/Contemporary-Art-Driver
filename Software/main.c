@@ -66,6 +66,10 @@ void Show_String(u8 x, u8 y, u8 *text) {
   }
 }
 
+int random(){
+	return 0;
+}
+
 int main(void) {
   u32 i = 0;
   OLED_Init(); //初始化OLED
