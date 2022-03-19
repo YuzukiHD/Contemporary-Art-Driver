@@ -1,10 +1,22 @@
 #include <intrins.h>
+#include <math.h>
 
 #include "GT20L16S1Y.h"
 #include "String.h"
 #include "oled.h"
+#include "AHT21.h"
 
 sbit BTN = P1 ^ 1;
+
+bit MODE = 0;
+
+#define IIC_Add_wr 0x70
+#define IIC_RX_Length 7
+
+u8 IIC_TX_Buffer[] = {0xAC, 0x33, 0x00};
+u8 IIC_RX_Buffer[IIC_RX_Length] = {0x00};
+u32 _ht = 0, _tt = 0;
+int TEMP, HUMI;
 
 void Show_String(u8 x, u8 y, u8 *text) {
   u8 i = 0;
@@ -66,26 +78,81 @@ void Show_String(u8 x, u8 y, u8 *text) {
   }
 }
 
-int random(){
-	return 0;
+void Clear_Data(void) {
+  int i;
+
+  for (i = 0; i < IIC_RX_Length; i++) {
+    IIC_RX_Buffer[i] = 0x00;
+  }
+  _ht = _tt = 0;
+}
+
+void AHT21(void) {
+	bit aaa, bbb;
+
+  SCL = 1;
+  SDA = 1;
+  Clear_Data();
+  WriteNByte(IIC_Add_wr, IIC_TX_Buffer, 3);
+  Delay80ms();
+	
+	aaa = ReadNByte(IIC_Add_wr, IIC_RX_Buffer, IIC_RX_Length);
+	bbb = CheckCRC(IIC_RX_Buffer, IIC_RX_Length);
+
+  if (ReadNByte(IIC_Add_wr, IIC_RX_Buffer, IIC_RX_Length) != 0 ||
+      CheckCRC(IIC_RX_Buffer, IIC_RX_Length) != 0) {
+    _ht = (_ht | IIC_RX_Buffer[1]) << 8;
+    _ht = (_ht | IIC_RX_Buffer[2]) << 8;
+    _ht = (_ht | IIC_RX_Buffer[3]) >> 4;
+    HUMI = ((int)_ht * 1.0 / 1024 / 1024) * 100;
+
+    _tt = (_tt | IIC_RX_Buffer[3]) << 8;
+    _tt = (_tt | IIC_RX_Buffer[4]) << 8;
+    _tt = (_tt | IIC_RX_Buffer[5]);
+    _tt = _tt & 0xfffff;
+    TEMP = (((int)_tt * 1.0 / 1024 / 1024) * 200) - 50;
+  }
 }
 
 int main(void) {
   u32 i = 0;
+  u8 C_TEMP[4], C_HUMI[4];
   OLED_Init(); //初始化OLED
   OLED_Clear();
   while (1) {
-    Show_String(0, 0, String[i]);
-    Show_String(0, 2, String[i + 1]);
-    i += 2;
-    if (i > len) {
-      i = 0;
+    if (!MODE) {
+      Show_String(0, 0, String[i]);
+      Show_String(0, 2, String[i + 1]);
+      i += 2;
+      if (i > len) {
+        i = 0;
+      }
+    } else {
+      AHT21();
+      Show_String(0, 0, HMD[0]);
+			C_TEMP[0] = (TEMP % 1000) / 100 + '0';
+			C_TEMP[1] = (TEMP % 100) / 10 + '0';
+			C_TEMP[2] = TEMP % 10 + '0';
+			C_TEMP[3] = '\0';
+			Show_String(48, 0, C_TEMP);
+
+			C_HUMI[0] = (HUMI % 1000) / 100 + '0';
+			C_HUMI[1] = (HUMI % 100) / 10 + '0';
+			C_HUMI[2] = HUMI % 10 + '0';
+			C_HUMI[3] = '\0';
+      Show_String(0, 2, HMD[1]);
+			Show_String(48, 2, C_HUMI);
     }
     BTN = 1;
     while (BTN) {
       _nop_();
     }
-		Delay_50ms(100);
+    Delay_50ms(100);
+
+    if (!BTN) {
+      MODE = ~MODE;
+    }
+
     OLED_Clear();
   }
 }

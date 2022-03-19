@@ -6,6 +6,7 @@
 
 #define LEN 5
 
+
 const unsigned char* code String[] = {
   {"相信十年后的八月"}, {"我们还会相遇"},
   {"月上柳梢头"}, {"人约黄昏后"},
@@ -15,5 +16,9 @@ const unsigned char* code String[] = {
 };
 
 const unsigned long code len = LEN * 2 - 1;
+
+const unsigned char* code HMD[] = {
+  {"温度："}, {"湿度："},
+};
 
 #endif
