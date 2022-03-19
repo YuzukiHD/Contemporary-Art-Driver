@@ -4,7 +4,7 @@
 #include "GT20L16S1Y.h"
 #include "String.h"
 #include "oled.h"
-#include "AHT21.h"
+#include "AHT20.h"
 
 sbit BTN = P1 ^ 1;
 
