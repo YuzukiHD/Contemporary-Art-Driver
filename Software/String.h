@@ -17,8 +17,4 @@ const unsigned char* code String[] = {
 
 const unsigned long code len = LEN * 2 - 1;
 
-const unsigned char* code HMD[] = {
-  {"ÎÂ¶È£º"}, {"Êª¶È£º"},
-};
-
 #endif
